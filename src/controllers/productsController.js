@@ -41,7 +41,7 @@ const controller = {
 	store: (req, res) => {
 		let products = readProducts();
 
-		const{name , price , description , discount , category} = req.body;
+		let{name , price , description , discount , category} = req.body;
 
 		let newProduct = {
 			id : products[products.length -1].id + 1,
@@ -49,7 +49,7 @@ const controller = {
 			description: description.trim(),
 			price : +price,
 			discount : +discount,
-			image : "default-image.png",
+			image : req.file ? req.file.filename : "default-image.png",
 			category
 		}
 
@@ -71,22 +71,33 @@ const controller = {
 	// Update - Method to update
 	update: (req, res) => {
 		let products = readProducts();
+		
 		const{name , price , description , discount , category} = req.body;
+
+		const product = products.find(product => product.id === +req.params.id)
 
 		const productsModify = products.map(product => {
 			if (product.id === +req.params.id) {
 				let productModify = {
 					...product,
 					name : name.trim(),
-					description: description.trim(),
 					price : +price,
+					description: description.trim(),
 					discount : +discount,
+					image : req.file ? req.file.filename : product.image,
 					category
 				}
 				return productModify
 			}
 			return product
 		})
+
+		if (req.file && product.image !== "default-image.png") {
+			if(fs.existsSync('./public/images/products' + product.image)) {
+				fs.unlinkSync('./public/images/products' + product.image)			
+			}
+		}
+
 		saveProducts(productsModify)
 		return res.redirect('/products')
 	},
